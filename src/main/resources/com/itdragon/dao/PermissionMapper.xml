@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.itdragon.dao.PermissionMapper">
+    <select id="findPermissionsByRole" resultType="com.itdragon.pojo.SysPermission">
+        SELECT  permission.permission from sys_role role
+        inner JOIN sys_role_permission rp on role.id= rp.roleId
+        inner JOIN sys_permission permission on permission.id = rp.permissionId
+        and role.role = #{role}
+    </select>
+
+    <select id="getPermissions" parameterType="com.itdragon.bean.QueryBean" resultType="com.itdragon.pojo.SysPermission">
+        select * from  sys_permission where status = 1
+        limit #{length} offset #{start}
+    </select>
+
+    <select id="getRecordsCount"  resultType="java.lang.Integer">
+        select count(1) from  sys_permission where status = 1
+    </select>
+
+    <insert id="addPermission">
+        insert into  sys_permission(id,name,url,permission,available,status) values (#{id},#{name},#{url},#{permission},#{available},1);
+    </insert>
+
+    <delete id="deletePermission">
+        update sys_permission set status=0 where id = #{id}
+    </delete>
+
+    <update id="updatePermission">
+        update sys_permission set name=#{name},url=#{url},permission=#{permission}
+        where id=#{id};
+    </update>
+
+    <select id="findPermissionById" resultType="com.itdragon.pojo.SysPermission">
+        SELECT  permission.id,permission.name,permission.url,permission.permission,permission.available from sys_permission permission
+        where id = #{roleID} ;
+    </select>
+</mapper>

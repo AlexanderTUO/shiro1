@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.itdragon.dao.RoleMapper">
+    <select id="findRolesByAccount" resultType="com.itdragon.pojo.SysRole">
+        SELECT  role.id,role.role,role.description,role.available from sys_user user
+        INNER JOIN sys_user_role ur on user.id= ur.userId
+        INNER JOIN sys_role role on role.id = ur.roleId
+        and `user`.account = #{account}
+    </select>
+
+    <select id="getRoles" parameterType="com.itdragon.bean.QueryBean" resultType="com.itdragon.pojo.SysRole">
+        select * from  sys_role where status = 1
+        limit #{length} offset #{start}
+    </select>
+
+    <select id="getRecordsCount"  resultType="java.lang.Integer">
+        select count(1) from  sys_role where status = 1
+    </select>
+
+    <insert id="addRole">
+        insert into  sys_role(id,role,description,status) values (#{id},#{role},#{description},1);
+    </insert>
+
+    <delete id="deleteRole">
+        update sys_role set status=0 where id = #{id}
+    </delete>
+
+    <update id="updateRole">
+        update sys_role set role=#{role},description=#{description}
+        where id=#{id};
+    </update>
+
+    <select id="findRoleById" resultType="com.itdragon.pojo.SysRole">
+        SELECT  role.id,role.role,role.description,role.available from sys_role role
+        where id = #{roleID} ;
+    </select>
+
+</mapper>
