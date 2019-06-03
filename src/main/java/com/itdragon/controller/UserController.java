@@ -5,10 +5,17 @@ import com.itdragon.bean.UserBean;
 import com.itdragon.pojo.Result;
 import com.itdragon.pojo.User;
 import com.itdragon.service.UserService;
+import com.itdragon.utils.ExcelUtils;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +31,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -85,12 +93,9 @@ public class UserController {
         User user = new User();
         BeanUtils.copyProperties(userBean, user);
 
-        String userId = getUUID();       //生成用户的随机id
+        String[] roleIds = userBean.getRoleIds();
 
-        user.setId(userId);
-        userService.addUser(user);//添加用户信息
-
-        userService.addUserRole(userId, userBean.getRoleIds());//添加用户id
+        userService.addUser(user,roleIds);//添加用户信息
     }
 
     @RequestMapping("/update")
@@ -165,32 +170,40 @@ public class UserController {
 
     @PostMapping("/import")
     @ResponseBody
-    public String upload(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
-        if (!file.isEmpty()) {
-            String saveFileName = file.getOriginalFilename();
-            File saveFile = new File(request.getSession().getServletContext().getRealPath("/upload/") + saveFileName);
-            if (!saveFile.getParentFile().exists()) {
-                saveFile.getParentFile().mkdirs();
-            }
-            try {
-                BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(saveFile));
-                out.write(file.getBytes());
-                out.flush();
-                out.close();
-                return "上传成功";
-//                return ResultUtils.buildResult(saveFile.getName() + " 上传成功");
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-//                return ResultUtils.buildResult("上传失败," + e.getMessage());
-                return "上传失败";
-            } catch (IOException e) {
-                e.printStackTrace();
-//                return ResultUtils.buildResult("上传失败," + e.getMessage());
-                return "上传失败";
-            }
-        } else {
-//            return ResultUtils.buildResult("上传失败，因为文件为空.");
-            return "上传失败，因为文件为空.";
+    public String upload(@RequestParam("file") MultipartFile file, HttpServletRequest request) throws Exception {
+        User user = (User) SecurityUtils.getSubject().getPrincipals().getPrimaryPrincipal();
+        try {
+            //excel文件内容解析
+            List<List<String>> lists = ExcelUtils.getLists(file, 0);
+
+            //内容保存到数据库
+            userService.importData(lists,user);
+            return "上传成功 ！！！";
+        } catch (Exception e) {
+            logger.info(e.getMessage());
+            return "上传失败 ！！！";
         }
+
+//            File saveFile = new File(request.getSession().getServletContext().getRealPath("/upload/") + fileName);
+//            if (!saveFile.getParentFile().exists()) {
+//                saveFile.getParentFile().mkdirs();
+//            }
+//            try {
+//                BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(saveFile));
+//                out.write(file.getBytes());
+//                out.flush();
+//                out.close();
+//                return "上传成功";
+////                return ResultUtils.buildResult(saveFile.getName() + " 上传成功");
+//            } catch (FileNotFoundException e) {
+//                e.printStackTrace();
+////                return ResultUtils.buildResult("上传失败," + e.getMessage());
+//                return "上传失败";
+//            } catch (IOException e) {
+//                e.printStackTrace();
+////                return ResultUtils.buildResult("上传失败," + e.getMessage());
+//                return "上传失败";
+//            }
+
     }
 }

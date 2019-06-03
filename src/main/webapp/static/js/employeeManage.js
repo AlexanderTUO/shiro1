@@ -290,6 +290,7 @@ $(function () {
                     $("#fileModal").modal("hide");
                     setTimeout(function () {
                         alert(data);
+                        table.ajax.reload();
                     }, 200);
                 },
                 error: function (data) {

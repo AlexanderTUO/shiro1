@@ -28,9 +28,10 @@ public interface UserService {
 
     void deleteUsers(String[] ids);
 
-    void addUser(User user);
+    void addUser(User user,String[] roleIds);
 
     void updateUser(User user);
 
-    void addUserRole(String userId,String[] roleIds);
+
+    void importData(List<List<String>> dataList, User user);
 }

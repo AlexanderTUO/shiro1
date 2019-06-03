@@ -9,14 +9,17 @@ import com.itdragon.pojo.SysPermission;
 import com.itdragon.pojo.SysRole;
 import com.itdragon.pojo.User;
 import com.itdragon.service.UserService;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * @Author: itdragon
@@ -106,8 +109,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void addUser(User user) {
+    @Transactional//加上事务
+    public void addUser(User user,String[] roleIds) {
+        String userId = getUUID();       //生成用户的随机id
+        user.setId(userId);
         userMapper.addUser(user);
+        this.addUserRole(userId,roleIds);
     }
 
     @Override
@@ -115,12 +122,63 @@ public class UserServiceImpl implements UserService {
         userMapper.updateUser(user);
     }
 
-    @Override
-    public void addUserRole(String userId,String[] roleIds) {
+    private void addUserRole(String userId,String[] roleIds) {
+        if (roleIds == null) {
+            return;
+        }
         for (String roleId : roleIds) {
             userMapper.addUserRole(userId,roleId);
         }
     }
 
+    @Override
+    public void importData(List<List<String>> dataList, User user0) {
+        for (List<String> strings : dataList) {
+            User user = new User();
+            String account = null;
+            if (strings.get(0).contains("\n")) {
+                account = strings.get(0).trim().replace("\n", "");
+                user.setAccount(account);
+            } else {
+                account = strings.get(0).trim();
+                user.setAccount(account);
+            }
 
+            if (strings.get(1).contains("\n")) {
+                String username = strings.get(1).trim().replace("\n", "");
+                user.setUsername(username);
+            } else {
+                user.setUsername(strings.get(1).trim());
+            }
+
+            if (strings.get(2).contains("\n")) {
+                String iphone = strings.get(2).trim().replace("\n", "");
+                user.setIphone(iphone);
+            } else {
+                user.setIphone(strings.get(2).trim());
+            }
+
+            if (strings.get(3).contains("\n")) {
+                String email = strings.get(3).trim().replace("\n", "");
+                user.setEmail(email);
+            } else {
+                user.setEmail(strings.get(3).trim());
+            }
+
+            if (!"".equals(account)&&this.findByName(account) == null) {
+                this.addUser(user, null);
+            } else {
+                //提示用户该用户已存在
+            }
+
+        }
+
+    }
+
+    private String getUUID() {
+        UUID uuid = UUID.randomUUID();
+        String str = uuid.toString();
+        String uuidStr = str.replace("-", "");
+        return uuidStr;
+    }
 }
